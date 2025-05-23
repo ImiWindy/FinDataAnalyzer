@@ -1,0 +1,11 @@
+{
+  "name": "TestModel",
+  "architecture": "CNN",
+  "input_shape": [
+    224,
+    224,
+    3
+  ],
+  "num_classes": 5,
+  "date_created": "Fri May 23 23:23:10 2025"
+}

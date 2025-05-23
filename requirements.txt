@@ -1,0 +1,35 @@
+# ماژول‌های اصلی
+numpy>=1.19.0
+pandas>=1.3.0
+scipy>=1.7.0
+scikit-learn>=0.24.0
+matplotlib>=3.3.0
+seaborn>=0.11.0
+
+# یادگیری ماشین و هوش مصنوعی
+tensorflow>=2.5.0
+# tensorflow-gpu>=2.7.0  # برای GPU نسخه - در نسخه‌های جدید با tensorflow ادغام شده است
+tensorboard>=2.7.0
+opencv-python>=4.5.0
+pillow>=8.2.0
+
+# پردازش داده
+PyYAML>=6.0
+tqdm>=4.60.0
+requests>=2.25.0
+schedule>=1.1.0
+
+# وب و API
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-multipart>=0.0.5
+pydantic>=1.8.0
+
+# پایگاه داده
+sqlalchemy>=1.4.0
+# sqlite3 جزء کتابخانه استاندارد پایتون است و نیازی به نصب ندارد
+
+# ابزارهای تست و توسعه
+pytest>=6.2.0
+black>=21.5b0
+flake8>=3.9.0 

@@ -1,0 +1,33 @@
+# تنظیمات تست برای ارزیابی مدل
+gpu:
+  use_gpu: false
+  memory_limit: 0.5
+  allow_growth: true
+  visible_devices: "0"
+
+model:
+  type: "resnet"
+  input_shape: [224, 224, 3]
+  learning_rate: 0.001
+  dropout_rate: 0.5
+
+training:
+  batch_size: 16
+  epochs: 5
+  early_stopping_patience: 3
+  validation_split: 0.2
+  use_augmentation: true
+  
+experiment_tracking:
+  base_dir: "experiments/"
+  checkpoints_dir: "models/test/"
+
+database:
+  url: "sqlite:///data/findataanalyzer_test.db"
+  echo: false
+
+data_pipeline:
+  raw_data_dir: "data/raw/"
+  processed_data_dir: "data/processed/"
+  cache_dir: "data/cache/"
+  image_dir: "data/samples/test/" 

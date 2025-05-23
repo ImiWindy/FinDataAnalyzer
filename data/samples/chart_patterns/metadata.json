@@ -1,0 +1,25 @@
+{
+  "classes": ["double_top", "double_bottom", "head_and_shoulders", "inverse_head_and_shoulders", "triangle"],
+  "images": [
+    {
+      "filename": "sample_double_top.png",
+      "label": 0
+    },
+    {
+      "filename": "sample_double_bottom.png",
+      "label": 1
+    },
+    {
+      "filename": "sample_head_and_shoulders.png",
+      "label": 2
+    },
+    {
+      "filename": "sample_inverse_head_and_shoulders.png",
+      "label": 3
+    },
+    {
+      "filename": "sample_triangle.png",
+      "label": 4
+    }
+  ]
+} 

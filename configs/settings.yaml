@@ -1,0 +1,102 @@
+# تنظیمات سیستم تحلیل داده‌های مالی و تشخیص الگوهای نمودار
+
+# تنظیمات سرور
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: true
+  workers: 4
+
+# تنظیمات GPU
+gpu:
+  use_gpu: false
+  memory_limit: 0.8  # درصد استفاده از حافظه GPU
+  allow_growth: true  # اجازه رشد تدریجی حافظه
+  visible_devices: "0"  # شماره دستگاه‌های قابل مشاهده
+
+# تنظیمات لاگ
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_path: "logs/app.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+  console_output: true
+
+# تنظیمات مدل
+model:
+  type: "resnet"  # نوع مدل (default یا resnet)
+  input_shape: [224, 224, 3]  # شکل ورودی (ارتفاع، عرض، کانال)
+  learning_rate: 0.001
+  dropout_rate: 0.5
+  base_filters: 64  # تعداد فیلترهای پایه برای لایه‌های کانولوشنی
+  kernel_size: 3  # اندازه کرنل برای لایه‌های کانولوشنی
+  
+  # تنظیمات مخصوص ResNet
+  resnet:
+    num_blocks: [3, 4, 6, 3]  # تعداد بلاک‌ها در هر مرحله
+    use_bottleneck: true  # استفاده از ساختار bottleneck
+
+# تنظیمات آموزش
+training:
+  batch_size: 32
+  epochs: 100
+  early_stopping_patience: 10
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+  validation_split: 0.2
+  use_augmentation: true
+  checkpoint_dir: "checkpoints/"
+  
+  # تنظیمات افزایش داده (data augmentation)
+  augmentation:
+    rotation_range: 20
+    width_shift_range: 0.2
+    height_shift_range: 0.2
+    zoom_range: 0.2
+    horizontal_flip: true
+    vertical_flip: false
+    brightness_range: [0.8, 1.2]
+
+# تنظیمات ردیابی آزمایش
+experiment_tracking:
+  base_dir: "experiments/"
+  log_metrics: true
+  save_model: true
+  checkpoints_dir: "checkpoints/"
+  experiments_dir: "experiments/log/"
+  metrics_dir: "experiments/metrics/"
+  tensorboard_dir: "experiments/tensorboard/"
+  save_best_only: true
+  monitor_metric: "val_loss"
+  monitor_mode: "min"
+
+# تنظیمات پایگاه داده
+database:
+  url: "sqlite:///data/findataanalyzer.db"
+  echo: false
+
+# تنظیمات فرآیند داده
+data_pipeline:
+  raw_data_dir: "data/raw/"
+  processed_data_dir: "data/processed/"
+  cache_dir: "data/cache/"
+  image_dir: "data/images/"
+  metadata_file: "metadata.json"
+  batch_size: 32
+  
+  # منابع داده مالی
+  data_sources:
+    - name: "binance"
+      type: "crypto"
+      enabled: true
+    - name: "yahoo"
+      type: "stock"
+      enabled: true
+
+# تنظیمات API
+api:
+  enable_docs: true
+  allow_cors: true
+  token_expire_minutes: 1440  # 24 ساعت
+  secret_key: "your-secret-key-here"

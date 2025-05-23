@@ -1,0 +1,111 @@
+{
+  "classes": [
+    "double_top",
+    "double_bottom",
+    "head_and_shoulders",
+    "inverse_head_and_shoulders",
+    "triangle"
+  ],
+  "images": [
+    {
+      "filename": "double_top/double_top_sample_0.png",
+      "label": 0
+    },
+    {
+      "filename": "double_top/double_top_sample_1.png",
+      "label": 0
+    },
+    {
+      "filename": "double_top/double_top_sample_2.png",
+      "label": 0
+    },
+    {
+      "filename": "double_top/double_top_sample_3.png",
+      "label": 0
+    },
+    {
+      "filename": "double_top/double_top_sample_4.png",
+      "label": 0
+    },
+    {
+      "filename": "double_bottom/double_bottom_sample_0.png",
+      "label": 1
+    },
+    {
+      "filename": "double_bottom/double_bottom_sample_1.png",
+      "label": 1
+    },
+    {
+      "filename": "double_bottom/double_bottom_sample_2.png",
+      "label": 1
+    },
+    {
+      "filename": "double_bottom/double_bottom_sample_3.png",
+      "label": 1
+    },
+    {
+      "filename": "double_bottom/double_bottom_sample_4.png",
+      "label": 1
+    },
+    {
+      "filename": "head_and_shoulders/head_and_shoulders_sample_0.png",
+      "label": 2
+    },
+    {
+      "filename": "head_and_shoulders/head_and_shoulders_sample_1.png",
+      "label": 2
+    },
+    {
+      "filename": "head_and_shoulders/head_and_shoulders_sample_2.png",
+      "label": 2
+    },
+    {
+      "filename": "head_and_shoulders/head_and_shoulders_sample_3.png",
+      "label": 2
+    },
+    {
+      "filename": "head_and_shoulders/head_and_shoulders_sample_4.png",
+      "label": 2
+    },
+    {
+      "filename": "inverse_head_and_shoulders/inverse_head_and_shoulders_sample_0.png",
+      "label": 3
+    },
+    {
+      "filename": "inverse_head_and_shoulders/inverse_head_and_shoulders_sample_1.png",
+      "label": 3
+    },
+    {
+      "filename": "inverse_head_and_shoulders/inverse_head_and_shoulders_sample_2.png",
+      "label": 3
+    },
+    {
+      "filename": "inverse_head_and_shoulders/inverse_head_and_shoulders_sample_3.png",
+      "label": 3
+    },
+    {
+      "filename": "inverse_head_and_shoulders/inverse_head_and_shoulders_sample_4.png",
+      "label": 3
+    },
+    {
+      "filename": "triangle/triangle_sample_0.png",
+      "label": 4
+    },
+    {
+      "filename": "triangle/triangle_sample_1.png",
+      "label": 4
+    },
+    {
+      "filename": "triangle/triangle_sample_2.png",
+      "label": 4
+    },
+    {
+      "filename": "triangle/triangle_sample_3.png",
+      "label": 4
+    },
+    {
+      "filename": "triangle/triangle_sample_4.png",
+      "label": 4
+    }
+  ]
+}
