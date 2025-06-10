@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     ALPACA_API_SECRET: str = os.getenv("ALPACA_API_SECRET", "")
     ALPACA_PAPER_TRADING_URL: str = "https://paper-api.alpaca.markets"
 
+    # Gemini API Key
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+
     # Database settings
     POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
     POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")

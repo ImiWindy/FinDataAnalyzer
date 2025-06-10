@@ -1,63 +1,68 @@
 """
-ایجاد یک مدل ساده برای تست
+Creates a test XGBoost model for predicting short-term price movements.
 """
-
 import os
-import json
-import time
+import joblib
 import numpy as np
-import tensorflow as tf
+import pandas as pd
 from pathlib import Path
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
-from tensorflow.keras.optimizers import Adam
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
 
-# مسیر ذخیره مدل
-model_dir = Path('models/test')
-os.makedirs(model_dir, exist_ok=True)
+# --- Configuration ---
+MODEL_DIR = Path('models/')
+MODEL_NAME = 'xgboost_model.joblib'
+MODEL_PATH = MODEL_DIR / MODEL_NAME
+LOOKAHEAD_PERIOD = 6 # Corresponds to 30 minutes with 5m candles
 
-# تنظیمات مدل
-input_shape = (224, 224, 3)
-num_classes = 5  # تعداد کلاس‌ها
+# Ensure the model directory exists
+os.makedirs(MODEL_DIR, exist_ok=True)
 
-# ایجاد مدل ساده CNN
-model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', padding='same', input_shape=input_shape),
-    MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu', padding='same'),
-    MaxPooling2D((2, 2)),
-    Conv2D(128, (3, 3), activation='relu', padding='same'),
-    MaxPooling2D((2, 2)),
-    Flatten(),
-    Dense(256, activation='relu'),
-    Dropout(0.5),
-    Dense(num_classes, activation='softmax')
-])
-
-# کامپایل مدل
-model.compile(
-    optimizer=Adam(learning_rate=0.001),
-    loss='sparse_categorical_crossentropy',
-    metrics=['accuracy']
-)
-
-# نمایش خلاصه مدل
-model.summary()
-
-# ذخیره مدل
-model_path = model_dir / 'model.h5'
-model.save(str(model_path))
-
-# ذخیره اطلاعات مدل
-model_info = {
-    "name": "TestModel",
-    "architecture": "CNN",
-    "input_shape": list(input_shape),
-    "num_classes": num_classes,
-    "date_created": time.ctime()
+# --- 1. Generate Synthetic Feature Data ---
+print("Generating synthetic multi-timeframe feature data...")
+num_samples = 2000
+# Mimic output of FeatureExtractor
+data = {
+    'close': np.random.uniform(100, 110, size=num_samples),
+    'sma_short_15m': np.random.uniform(98, 112, size=num_samples),
+    'rsi_15m': np.random.uniform(30, 70, size=num_samples),
+    'sma_long_1h': np.random.uniform(95, 115, size=num_samples),
+    'rsi_1h': np.random.uniform(20, 80, size=num_samples),
 }
+X = pd.DataFrame(data)
 
-with open(model_dir / 'model_info.json', 'w', encoding='utf-8') as f:
-    json.dump(model_info, f, ensure_ascii=False, indent=2)
-    
-print(f"\nمدل ساده تست با موفقیت در مسیر {model_path} ایجاد و ذخیره شد.") 
+# --- 2. Generate Synthetic Target Variable ---
+# The target is: will the price be higher in `LOOKAHEAD_PERIOD` candles?
+# We shift the 'close' price backwards to get the future price at each point.
+future_price = X['close'].shift(-LOOKAHEAD_PERIOD)
+y = (future_price > X['close']).astype(int)
+
+# Remove the last rows where the future price is unknown (NaN)
+X = X.iloc[:-LOOKAHEAD_PERIOD]
+y = y.iloc[:-LOOKAHEAD_PERIOD]
+
+print(f"Generated {len(y)} samples, with {y.sum()} positive examples.")
+
+# --- 3. Train the XGBoost Model ---
+print("Training an XGBoost Classifier model...")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = xgb.XGBClassifier(
+    objective='binary:logistic',
+    eval_metric='logloss',
+    use_label_encoder=False,
+    n_estimators=100,
+    learning_rate=0.1,
+    max_depth=3
+)
+model.fit(X_train, y_train)
+
+# --- 4. Evaluate and Save the Model ---
+accuracy = model.score(X_test, y_test)
+print(f"Model accuracy on test set: {accuracy:.2f}")
+
+print(f"Saving model to {MODEL_PATH}...")
+joblib.dump(model, MODEL_PATH)
+
+print("\nXGBoost test model created and saved successfully.")
+print(f"This model expects a DataFrame with columns: {list(X.columns)}") 

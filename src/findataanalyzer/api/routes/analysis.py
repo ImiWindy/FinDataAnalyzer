@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 from findataanalyzer.core.analyzer import DataAnalyzer
 from findataanalyzer.models.data_models import AnalysisRequest, AnalysisResponse
+from findataanalyzer.image_analysis.tasks import process_image_task
 
 router = APIRouter(
     prefix="/analysis",
@@ -39,4 +40,20 @@ async def upload_and_analyze(file: UploadFile = File(...)):
             "results": results
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/process-image-async")
+async def process_image_async(image_path: str):
+    """
+    Triggers an asynchronous task to process an image.
+
+    Returns a task ID that can be used to check the status of the processing.
+    """
+    try:
+        # Note: In a real-world app, you'd have better security and path validation.
+        # This is a simplified example.
+        task = process_image_task.delay(image_path)
+        return {"task_id": task.id, "status": "processing_started"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start task: {e}") 

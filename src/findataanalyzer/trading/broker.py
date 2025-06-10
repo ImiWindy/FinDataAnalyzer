@@ -24,6 +24,9 @@ class Broker(ABC):
         time_in_force: str,
         limit_price: Optional[float] = None,
         stop_price: Optional[float] = None,
+        order_class: Optional[str] = None,
+        take_profit_price: Optional[float] = None,
+        stop_loss_price: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Place a new order."""
         pass
@@ -31,6 +34,11 @@ class Broker(ABC):
     @abstractmethod
     def get_position(self, symbol: str) -> Dict[str, Any]:
         """Get position for a given symbol."""
+        pass
+
+    @abstractmethod
+    def get_latest_quote(self, symbol: str) -> Dict[str, Any]:
+        """Get the latest quote for a given symbol."""
         pass
 
 class AlpacaBroker(Broker):
@@ -68,6 +76,9 @@ class AlpacaBroker(Broker):
         time_in_force: str,
         limit_price: Optional[float] = None,
         stop_price: Optional[float] = None,
+        order_class: Optional[str] = None,
+        take_profit_price: Optional[float] = None,
+        stop_loss_price: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Place a new order on Alpaca.
@@ -80,19 +91,34 @@ class AlpacaBroker(Broker):
             time_in_force: 'day', 'gtc', 'opg'.
             limit_price: The limit price for limit orders.
             stop_price: The stop price for stop orders.
+            order_class: 'simple' or 'bracket' for advanced orders.
+            take_profit_price: The take profit price for bracket orders.
+            stop_loss_price: The stop loss price for bracket orders.
         
         Returns:
             A dictionary representing the placed order.
         """
-        order = self.api.submit_order(
-            symbol=symbol,
-            qty=qty,
-            side=side,
-            type=order_type,
-            time_in_force=time_in_force,
-            limit_price=limit_price,
-            stop_price=stop_price,
-        )
+        order_data = {
+            "symbol": symbol,
+            "qty": qty,
+            "side": side,
+            "type": order_type,
+            "time_in_force": time_in_force,
+            "limit_price": limit_price,
+            "stop_price": stop_price,
+        }
+
+        if order_class == 'bracket':
+            if not take_profit_price or not stop_loss_price:
+                raise ValueError("take_profit_price and stop_loss_price are required for bracket orders.")
+            order_data["order_class"] = "bracket"
+            order_data["take_profit"] = {"limit_price": take_profit_price}
+            order_data["stop_loss"] = {"stop_price": stop_loss_price}
+
+        # Filter out None values so they don't get passed to the API
+        order_data = {k: v for k, v in order_data.items() if v is not None}
+
+        order = self.api.submit_order(**order_data)
         return order._raw
 
     def get_position(self, symbol: str) -> Dict[str, Any]:
@@ -103,4 +129,9 @@ class AlpacaBroker(Broker):
         except tradeapi.rest.APIError as e:
             if e.status_code == 404:
                 return {}  # No position found
-            raise e 
+            raise e
+
+    def get_latest_quote(self, symbol: str) -> Dict[str, Any]:
+        """Get the latest quote for a given symbol from Alpaca."""
+        quote = self.api.get_latest_quote(symbol)
+        return quote._raw 

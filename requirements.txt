@@ -39,8 +39,16 @@ pydantic-settings
 python-dotenv
 
 # Database
-SQLAlchemy
 psycopg2-binary
 
+# Task Queue
+celery
+redis
+
 # Trading
-alpaca-trade-api 
+alpaca-trade-api
+google-generativeai==0.5.4
+yfinance
+xgboost
+quantstats
+IPython 

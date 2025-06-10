@@ -1,190 +1,109 @@
-"""Financial data prediction module."""
-
+"""
+Module for loading a pre-trained model and making predictions.
+"""
+import logging
+from pathlib import Path
+import joblib
 import pandas as pd
 import numpy as np
-from typing import Dict, Any, List, Optional, Tuple
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
-from statsmodels.tsa.arima.model import ARIMA
+from typing import List
 
+logger = logging.getLogger(__name__)
 
 class Predictor:
-    """Financial data prediction class."""
-    
-    def __init__(self):
-        """Initialize the predictor."""
-        self.models = {}
-        self.scalers = {}
-    
-    def train(self, data: pd.DataFrame, target_column: str, 
-              features: Optional[List[str]] = None, 
-              method: str = "linear") -> Dict[str, Any]:
+    """
+    A wrapper for a pre-trained scikit-learn model to make predictions.
+    """
+
+    def __init__(self, model_path: Path):
         """
-        Train a prediction model on financial data.
-        
+        Initializes the Predictor by loading the model from the given path.
+
         Args:
-            data: DataFrame containing the financial data
-            target_column: The column to predict
-            features: List of feature columns to use for prediction
-            method: Prediction method (linear, arima, etc.)
-            
-        Returns:
-            Dictionary with training results
-        """
-        if method == "linear":
-            return self._train_linear(data, target_column, features)
-        elif method == "arima":
-            return self._train_arima(data, target_column)
-        else:
-            raise ValueError(f"Unsupported prediction method: {method}")
-    
-    def predict(self, data: pd.DataFrame, target_column: str, 
-                horizon: int = 1, method: str = "linear") -> Dict[str, Any]:
-        """
-        Make predictions on financial data.
+            model_path: The path to the saved model file (e.g., .joblib).
         
+        Raises:
+            FileNotFoundError: If the model file does not exist.
+        """
+        self.model_path = model_path
+        self.model = None
+        self._load_model()
+
+    def _load_model(self):
+        """Loads the model from the specified path."""
+        try:
+            logger.info("Loading model from %s", self.model_path)
+            self.model = joblib.load(self.model_path)
+            logger.info("Model loaded successfully.")
+        except FileNotFoundError:
+            logger.error("Model file not found at %s.", self.model_path)
+            raise
+        except Exception as e:
+            logger.error("An error occurred while loading the model: %s", e)
+            raise
+
+    def predict_proba(self, features: pd.DataFrame) -> np.ndarray:
+        """
+        Predicts the success probability for a given set of features.
+
         Args:
-            data: DataFrame containing the financial data
-            target_column: The column to predict
-            horizon: Number of steps to predict into the future
-            method: Prediction method (linear, arima, etc.)
-            
+            features: A pandas DataFrame where columns match the features
+                      the model was trained on.
+
         Returns:
-            Dictionary with prediction results
+            A numpy array of prediction probabilities for the positive class (class 1).
+            Returns an empty array if prediction fails.
         """
-        if method == "linear":
-            return self._predict_linear(data, target_column, horizon)
-        elif method == "arima":
-            return self._predict_arima(data, target_column, horizon)
+        if self.model is None:
+            logger.error("Model is not loaded. Cannot make predictions.")
+            return np.array([])
+            
+        if not isinstance(features, pd.DataFrame) or features.empty:
+            logger.warning("Input features are empty or not a DataFrame. No prediction.")
+            return np.array([])
+
+        try:
+            # Reorder columns to match model's expected feature order, if available
+            if hasattr(self.model, 'feature_names_in_'):
+                model_features = self.model.feature_names_in_
+                features = features[model_features]
+
+            # The output of predict_proba is [prob_class_0, prob_class_1]
+            # We are interested in the probability of the positive class (1)
+            probabilities = self.model.predict_proba(features)
+            
+            # Return the probability of the second class (index 1)
+            return probabilities[:, 1]
+            
+        except KeyError as e:
+            logger.error("Prediction failed. A required feature is missing from the input: %s", e)
+            return np.array([])
+        except Exception as e:
+            logger.error("An error occurred during prediction: %s", e)
+            return np.array([])
+
+# Example usage (for testing purposes)
+if __name__ == '__main__':
+    # This assumes you have run `create_test_model.py` first
+    MODEL_FILE = Path("models/test_tabular_model.joblib")
+    
+    if not MODEL_FILE.exists():
+        print("Model file not found. Please run `create_test_model.py` first.")
+    else:
+        # Create dummy data for prediction
+        dummy_data = {
+            'sma_short_15m': [102], 'sma_long_15m': [100], 'rsi_15m': [60],
+            'sma_short_1h': [105], 'rsi_1h': [65]
+        }
+        feature_df = pd.DataFrame(dummy_data)
+        
+        print("Attempting to predict with dummy data:")
+        print(feature_df)
+        
+        predictor = Predictor(model_path=MODEL_FILE)
+        success_prob = predictor.predict_proba(feature_df)
+        
+        if success_prob.size > 0:
+            print(f"\nPredicted success probability: {success_prob[0]:.4f}")
         else:
-            raise ValueError(f"Unsupported prediction method: {method}")
-    
-    def _train_linear(self, data: pd.DataFrame, target_column: str, 
-                      features: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Train a linear regression model."""
-        if features is None:
-            # Use all numerical columns except the target as features
-            features = [col for col in data.select_dtypes(include=['number']).columns 
-                       if col != target_column]
-        
-        if not features:
-            raise ValueError("No features available for prediction")
-        
-        # Prepare the data
-        X = data[features].values
-        y = data[target_column].values
-        
-        # Scale the features
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-        
-        # Train the model
-        model = LinearRegression()
-        model.fit(X_scaled, y)
-        
-        # Store the model and scaler
-        self.models[target_column] = model
-        self.scalers[target_column] = {
-            'scaler': scaler,
-            'features': features
-        }
-        
-        # Calculate training metrics
-        y_pred = model.predict(X_scaled)
-        mse = np.mean((y - y_pred) ** 2)
-        r2 = model.score(X_scaled, y)
-        
-        return {
-            'method': 'linear',
-            'target': target_column,
-            'features': features,
-            'metrics': {
-                'mse': float(mse),
-                'r2': float(r2)
-            },
-            'coefficients': {feat: float(coef) for feat, coef in zip(features, model.coef_)},
-            'intercept': float(model.intercept_)
-        }
-    
-    def _predict_linear(self, data: pd.DataFrame, target_column: str, 
-                        horizon: int = 1) -> Dict[str, Any]:
-        """Make predictions using a linear regression model."""
-        if target_column not in self.models:
-            raise ValueError(f"No trained model found for {target_column}. Call train() first.")
-        
-        model = self.models[target_column]
-        scaler_info = self.scalers[target_column]
-        scaler = scaler_info['scaler']
-        features = scaler_info['features']
-        
-        # Prepare the data
-        X = data[features].values
-        X_scaled = scaler.transform(X)
-        
-        # Make predictions
-        predictions = model.predict(X_scaled)
-        
-        # For future predictions (simple approach for demonstration)
-        future_predictions = []
-        last_data_point = data.iloc[-1:][features].values
-        last_scaled = scaler.transform(last_data_point)
-        
-        next_pred = model.predict(last_scaled)[0]
-        future_predictions.append(float(next_pred))
-        
-        for _ in range(1, horizon):
-            # Very simplistic approach - in a real system, you would update features
-            next_pred = next_pred * 1.01  # Just a placeholder
-            future_predictions.append(float(next_pred))
-        
-        return {
-            'method': 'linear',
-            'target': target_column,
-            'current_predictions': predictions.tolist(),
-            'future_predictions': future_predictions
-        }
-    
-    def _train_arima(self, data: pd.DataFrame, target_column: str) -> Dict[str, Any]:
-        """Train an ARIMA model for time series prediction."""
-        # Ensure data is sorted by time if there's a time column
-        if 'date' in data.columns:
-            data = data.sort_values('date')
-        
-        # Get the target series
-        y = data[target_column].values
-        
-        # Fit ARIMA model (simple configuration for demonstration)
-        model = ARIMA(y, order=(1, 1, 1))
-        model_fit = model.fit()
-        
-        # Store the model
-        self.models[f"{target_column}_arima"] = model_fit
-        
-        # Get model summary
-        summary = model_fit.summary()
-        
-        return {
-            'method': 'arima',
-            'target': target_column,
-            'order': (1, 1, 1),
-            'aic': float(model_fit.aic),
-            'bic': float(model_fit.bic)
-        }
-    
-    def _predict_arima(self, data: pd.DataFrame, target_column: str, 
-                       horizon: int = 1) -> Dict[str, Any]:
-        """Make predictions using an ARIMA model."""
-        model_key = f"{target_column}_arima"
-        if model_key not in self.models:
-            raise ValueError(f"No trained ARIMA model found for {target_column}. Call train() first.")
-        
-        model_fit = self.models[model_key]
-        
-        # Make predictions
-        forecast = model_fit.forecast(steps=horizon)
-        
-        return {
-            'method': 'arima',
-            'target': target_column,
-            'forecast': forecast.tolist()
-        } 
+            print("\nPrediction failed.") 
