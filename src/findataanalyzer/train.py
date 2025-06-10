@@ -23,6 +23,9 @@ from findataanalyzer.image_analysis.processors.image_processor import StandardPr
 from findataanalyzer.image_analysis.database.image_database import GPUImageProcessor
 from findataanalyzer.models.pattern_recognition.chart_pattern_model import ChartPatternModel, ChartPatternResNetModel
 
+# Type alias for TensorFlow Datasets for better readability
+TFDataset = tf.data.Dataset
+
 
 def setup_environment(config_path: str) -> Dict[str, Any]:
     """
@@ -122,7 +125,7 @@ def load_data(config: Dict[str, Any], data_path: str) -> Tuple[np.ndarray, np.nd
     return X, y, class_names
 
 
-def prepare_data(X: np.ndarray, y: np.ndarray, val_split: float = 0.2) -> Dict[str, Any]:
+def prepare_data(X: np.ndarray, y: np.ndarray, val_split: float = 0.2) -> Dict[str, TFDataset | np.ndarray]:
     """
     آماده‌سازی داده‌ها برای آموزش و اعتبارسنجی.
     
@@ -201,8 +204,12 @@ def create_model(config: Dict[str, Any], num_classes: int) -> ChartPatternModel:
     return model
 
 
-def train_model(model: ChartPatternModel, dataset: Dict[str, Any], 
-               config: Dict[str, Any], experiment_tracker: ExperimentTracker) -> Dict[str, Any]:
+def train_model(
+    model: ChartPatternModel, 
+    dataset: Dict[str, TFDataset | np.ndarray],
+    config: Dict[str, Any], 
+    experiment_tracker: ExperimentTracker
+) -> tf.keras.callbacks.History:
     """
     آموزش مدل.
     
@@ -255,16 +262,17 @@ def train_model(model: ChartPatternModel, dataset: Dict[str, Any],
     return history
 
 
-def evaluate_model(model: ChartPatternModel, dataset: Dict[str, Any]) -> Dict[str, float]:
+def evaluate_model(model: ChartPatternModel, dataset: Dict[str, TFDataset | np.ndarray], class_names: List[str]) -> Dict[str, Any]:
     """
-    ارزیابی مدل.
+    ارزیابی مدل آموزش دیده.
     
     Args:
         model: مدل آموزش دیده
         dataset: دیکشنری دیتاست‌ها
+        class_names: لیست نام کلاس‌ها
     
     Returns:
-        دیکشنری معیارهای ارزیابی
+        دیکشنری شامل متریک‌های ارزیابی
     """
     logger = logging.getLogger(__name__)
     logger.info("ارزیابی مدل...")
@@ -277,9 +285,9 @@ def evaluate_model(model: ChartPatternModel, dataset: Dict[str, Any]) -> Dict[st
     return metrics
 
 
-def save_model(model: ChartPatternModel, output_dir: str, metrics: Dict[str, float]) -> str:
+def save_model(model: ChartPatternModel, output_dir: str, metrics: Dict[str, Any]) -> Path:
     """
-    ذخیره مدل آموزش دیده.
+    ذخیره مدل و نتایج.
     
     Args:
         model: مدل آموزش دیده
@@ -310,7 +318,7 @@ def save_model(model: ChartPatternModel, output_dir: str, metrics: Dict[str, flo
     logger.info(f"مدل با موفقیت در {model_path} ذخیره شد")
     logger.info(f"معیارهای ارزیابی در {metrics_path} ذخیره شد")
     
-    return str(model_path)
+    return model_path
 
 
 def main():
@@ -344,7 +352,7 @@ def main():
         history = train_model(model, dataset, config, experiment_tracker)
         
         # ارزیابی مدل
-        metrics = evaluate_model(model, dataset)
+        metrics = evaluate_model(model, dataset, class_names)
         
         # ذخیره مدل
         model_path = save_model(model, args.output, metrics)

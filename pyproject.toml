@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
@@ -11,9 +11,17 @@ profile = "black"
 line_length = 88
 
 [tool.mypy]
-python_version = "3.9"
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
 
 [tool.pytest]
-testpaths = ["tests"] 
+testpaths = ["tests"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true 

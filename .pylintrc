@@ -1,0 +1,16 @@
+[main]
+load-plugins=pylint.extensions.docparams,pylint_pydantic
+
+[master]
+ignore-patterns=.*\.md, .*\.json, .*\.yaml, .*\.yml, .*\.txt, .*\.csv
+
+[messages control]
+disable=C0114, # missing-module-docstring
+        C0115, # missing-class-docstring
+        C0116, # missing-function-docstring
+        R0903, # too-few-public-methods
+        R0801, # duplicate-code
+        E0401  # import-error
+        
+[format]
+max-line-length=88 
